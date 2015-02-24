@@ -18,23 +18,25 @@ import obspy.xseed
 import numpy as np
 
 
-def get_waveforms(starttime = str() , duration, Surface = True, Borehole = True, metadata = True, filestruct =  Channel,Stat, Net, Sta, BUD, ):
+def get_waveforms(starttime = str() , duration, Surface = True, Borehole = True, metadata = True, filestruct =  Channel,Stat, Net, Sta, BUD, zerofill = True):
 
 # ====================================================
 # Sort out time from user input
 # ====================================================
 
-
 # ========================
 # Data download
 # ========================
-
 
 # ========================================
 # Attach metadata
 # ========================================
 
+#download meta
 
+# ========================================
+# Process: fill, buffer, highpass lowpass, remove response, spectral whitening
+# ========================================
 
 # ========================================
 # Output
