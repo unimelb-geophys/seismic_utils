@@ -368,16 +368,15 @@ def return_index(main_list, search_str):
                             ###START VARIABLES###
 #=============================================================================
 
-#set important variables
 project_duration = 2 #set duration of the project measured in days
 
-Y = "2014"                #start year
-M = "01"                  #start month
-D = "09"                  #start day of that month
 
 #=============================================================================
                             ###ENTER DEFAULTS###
 #=============================================================================
+#list of all the station names stored on ours servers
+all_stations = ['BRAD','CLIF','HODL','HOLS','KRAN','LOCU','MELU','MRDN',\
+                'NARR','PEGM','PEGU','S88U','SOMU','WALM','ADE','DNL','MRAT']
 
 #start date example: 2012-03-24-00-12
 start_date = '2014-01-01-00-00'
@@ -398,7 +397,8 @@ data_struct = 'Singles'
 #default station name is 'CLIF' for testing. You can either one string or
 #a list of strings containing each station name. 
 #find out how to get a list of station names from the XML file as 
-station_name = 'CLIF'
+#set 
+stations = 0 # 'CLIF'
 
 
 #=============================================================================
@@ -517,6 +517,66 @@ while check == False:
 #then concatenate. 
 
 #also get it to initiate a download if more than one hour duration, but less than a day. 
+
+
+#=============================================================================
+                            ###CALL FOR STATION NAMES###
+#=============================================================================
+stations_list = []
+check = False  
+check2 = False
+
+
+###CODE STILL NEEDS TO CHECK IF THE STATION ENTERED IS BOTH IN THE LIST OF
+###STATIONS FOR OUR NETWORK AND THE LIST BEING CREATED! 
+if stations != 0:
+    stations = stations
+    
+else: 
+    while check == False:
+   
+        stations = raw_input("\nPlease enter the station name you require: ")
+        if stations not in stations_list:
+            stations_list.append(stations)
+            print(stations_list)
+        else:
+            continue
+        
+        check2 = False
+        while check2 == False:
+            YN = raw_input("\nDo you also require data from another station? (Y/N) ")
+            
+            if YN in 'Y' or 'N':
+                if YN in 'Y':
+                    check = False
+                    check2 = True
+                else:
+                    check = True
+                    check2 = True
+
+            else:
+                check = False
+                print("Please enter either Y or N as your answer")
+
+
+
+
+if stations is str or stations in all_stations:
+    check = True
+    station_name = stations
+
+elif stations is list or stations in all_stations:
+    station_name = [i for i in stations]
+    print(station_name)
+            
+else:
+    check = False
+    print("\nYou have yet to enter a station name of correct format")
+    print("\nYour STATION options are: ")
+    stations_str = ''
+    for i in all_stations: stations_str += i + " " 
+    print("\n%s" %(stations_str))
+
 
 
 #=============================================================================
