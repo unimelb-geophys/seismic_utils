@@ -34,6 +34,7 @@ from obspy import read, read_inventory
 from obspy import station
 from obspy.station import stationxml
 
+
 import calendar, copy, csv, datetime, glob, io, math, obspy, os, shutil, \
 StringIO, time, unittest, urllib2, warnings
 
@@ -66,12 +67,7 @@ import matplotlib.pyplot as plt, numpy as np
 #def ANT_struct():
     
     
-    
-    
-    
-
-
-def metadata(input_directory, XML_directory):
+def metadata(input_directory):
     #use file name produced from download script to read .mseed file from wherever this has been saved.
     #alternatively I imagine eventually we could pull files down from seishub instead.
 
@@ -165,14 +161,28 @@ def metadata(input_directory, XML_directory):
         st[i] = tr
 
     # ATTACH METADATA TO STREAM
+    # ATTACH METADATA TO STREAM
+
+    #import and read metadata file from GitHub
+    os.system('wget https://raw.githubusercontent.com/unimelb-geophys/metadata/master/UOM.xml')
+    metadata = stationxml.read_StationXML('UOM.xml')
+
+    #attach metadata to stream
+    st.attach_response(metadata)
+
+
+    #delete downloaded metadata file 
+    #os.system('rm -r UOM.xml')
+
+    #then save the file, or push to seishub, open in obspyck etc.
+
+
 
     #import and read metadata file, before attaching it to our stream
     #next step is to pull from github or include option here to update metadata file.
     
-    metadata = stationxml.read_StationXML(XML_directory)
     #can use'("/path/to/UOM.xml")' to direct script to the correct location
 
-    st.attach_response(metadata)
     
     
     ###if write doesn't overwrite file already in directory, then write a delete 
@@ -180,11 +190,19 @@ def metadata(input_directory, XML_directory):
     
     #then save the file, or push to seishub, open in obspyck etc.
 
-    st.write(input_directory)
+    #st.write(input_directory, format = "MSEED")
     
     
     return st
     
+    
+def response(input_directory):
+    
+    st = read(input_directory)
+    #st.remove_response()
+    tr = st[0]
+    print(tr.stats)
+
 # ========================================
 
     
@@ -235,38 +253,33 @@ longitude=&fileformat=miniseed&getwave=Get+Waveform' \
     %(call_eq_string, output_file_name)
 
     os.system(final_string)
+    
+    return(output_file_name)
 
     #--user=eq --password=event55s
-def split_channels(Y, julian, network_name, name, date_station):
+
+def split_channels(time_dur, station_name, output_file_name):
     
     """
     Function to import mini-seed files from working directory, split them based
     on the specified channels, then save the files with a new function name. 
     """
-    
-    channels = ['Z'] 
+
+    channels = ['E','N','Z']         
     
     for channel in channels:
-    
-        #read mseed files
-        sts = read("%s.mseed" %(date_station))
-        #select channel to split
+               
+        sts = read(output_file_name)
+                #select channel to split
         
         channel_split = sts.select(component="%s" %(channel))
         
-        
-        #check to see if there is already a directory with that name, if not, 
-        #create one
-        if not os.path.exists("networks/%s/%s" %(network_name, name)):\
-        os.makedirs("networks/%s/%s" %(network_name, name))
-    
         #save individual channels to correct directories and correct file name
         #for BUD structure for MSNOISE
-        channel_split.write('networks/%s/%s/%s.%s..EN%s.%s.%s' %(network_name, name,\
-        name, network_name, channel, Y, julian), format='MSEED')
+        channel_split.write('EN%s.%s' %(channel,\
+        output_file_name), format='MSEED')
 
-
-    
+        
 def read_channels(date_station):
     
     sts = read("%s.mseed" %(date_station))
@@ -414,8 +427,6 @@ def leap_year (year):
         else:
             return (0)
       
-
-
 def calendar_date(year, doy):
     """
     Function that returns a string of the year, the month and the day of the
@@ -464,6 +475,8 @@ def merge_delete(year, month, day, hour, mins, time_dur, station_name):
     #delete individual station's hourly data
     for s in glob.glob(file_name):
           os.remove(s)
+    
+    return(file_name)
           
           
    
@@ -513,7 +526,7 @@ mins = start_date_list[4]
 #example: 3600 seconds for an hour, or 60 seconds for a minute etc. 
 #DO NOT INPUT minute, hour or day as a string for this input!
 #set to 0 for raw inputs
-time_dur = 86400
+time_dur = 3600
 
 #default output file structure is singles. This means all files will just be
 #save to the current working directory. 
@@ -524,7 +537,9 @@ data_struct = 'Singles'
 #find out how to get a list of station names from the XML file as 
 
 #set stations to 0 for raw input
-stations = ['CLIF', 'HODL'] # ['CLIF'] or ['CLIF', 'HODL'] or set as 0 for raw input!
+stations = ['HOLS'] # ['CLIF'] or ['CLIF', 'HODL'] or set as 0 for raw input!
+
+split = 'Yes'
 
 
 #=============================================================================
@@ -710,6 +725,7 @@ else:
 
     
 if time_dur == 86400:
+    
     for station_name in stations_list:
 
         #reset time_dur to one hour or 3600 seconds in order to not time out!
@@ -725,21 +741,73 @@ if time_dur == 86400:
             #order for the download function to work!
             hour1 = int(hour1); hour1 += 1; hour1 = str(hour1)
         
-            ###EDIT MERGE_DELETE FUNCTION TO WORK!!!###
+        
         start_time = starttime(year, month, day, hour, mins)
+        
         merge_delete(year, month, day, hour, mins, time_dur, station_name)
         
+        file_name = merge_delete(year, month, day, hour, mins, time_dur, station_name)
+        
+        input_directory = file_name
+        
+        #metadata(input_directory)
+        
+        #response(input_directory)
+                
+
+        ###THIS ELIF IF STILL UNDER CONSTRUCTION###
 elif int(float(time_dur) / 3600) > 1:
+        
+        for station_name in stations_list:
     
-    download(year, month, day, hour, mins, time_dur, station_name)
+            download(year, month, day, hour, mins, time_dur, station_name)
 
     
 else:
     
-    download(year, month, day, hour, mins, time_dur, station_name)
+    for station_name in stations_list:
 
     
+        download(year, month, day, hour, mins, time_dur, station_name)
+    
+        output_file_name = download(year, month, day, hour, mins, time_dur, station_name)
+    
+        input_directory = output_file_name
         
+        split_channels(time_dur, station_name, output_file_name)
+
+        
+        
+        
+
+
+
+#if split != None:
+    
+#    quit()
+
+
+#else:
+    
+#    while check == False:
+                
+#        split = raw_input("\nWould you like to split the channels of your data? also require data from another station? (Y/N) ")
+            
+#        if YN == 'Y': # or 'yes' or 'YES' or 'Yes' or 'y':
+#            check = False
+                    
+#        elif YN == 'N': # or 'no' or 'NO' or 'No' or 'n': 
+#            check = True
+                    
+#        else:
+#            print("\nPlease enter either Y or N as your answer")
+#            check = False
+#            check2 = False 
+        
+        
+        #metadata(input_directory)
+    
+        #response(input_directory)
 
 
 #import array of stringed names for each of the different stations (in melbourne)
@@ -759,96 +827,6 @@ else:
 
 #julian = datetime.datetime(int(Y), int(M), int(D), 00, 00, 00)\
 #.timetuple().tm_yday
-
-#=============================================================================
-                            ###END VARIABLES###
-#=============================================================================
-
-
-
-
-#=============================================================================
-                            ###START DOWNLOAD CALLS###
-#=============================================================================
-
-#stations, latitude, longitude = stations()
-
-#for day in range(1, project_duration):
-    #calendar_date function returns date from day of the year
-#    date = calendar_date(int(Y), julian);
-
-#    Y = date[0];
-#    M = date[1];
-    #month = str(M).zfill(2) #create correct format for eqstring
-#    D = date[2];
-    #day = str(D).zfill(3) #create correct format for eqstring
-#    date_stamp = "%s-%s-%-s" %(Y, M, D);
-#    dur = "%d" %(secs_in_hour)#string telling the program the duration 
-                                  #of data you require
-#    mdur = (float(dur))/60
-#    mdur = math.ceil(mdur)
-#    mdur = int(mdur)
-    
-        
-#    for name in stations:
-        
-#        date_station = "%s_%s" %(name, date_stamp);
-        
-#        for hour in range(0, 24): 
-            
-            #set start date
-#            H = "%d" %(hour)          #start hour
-#            m = "0"                  #start minute
-#            
-#            stamp = "%s-%s-%sT%s:00" %(Y, M, D, str(H).zfill(2))
-#            
-    #files are meant to be one hour long and seem to start at minute 00
-    #For broken files there will need to be some additions to the script 
-            #hour = str(hour).zfill(2) #create correct format for eqstring
-            #downloading miniseed file for each individual station. 
-            
-            
-#            eqstring = 'http://agos1.kelunji.net/eqserver/eqwaveextractor?year=%s&\
-#month=%s&day=%s&hour=%s&minute=%s&duration=%s&servernum=0&conttrig=0&\
-#sitechoice=list&sitelist=+%s+&siteradius=&closesite=&radius=&latitude=&\
-#longitude=&fileformat=miniseed&getwave=Get+Waveform' \
-#%(Y, M, D, hour, m, \
-#str(mdur), name)
-              
-        
-#            fin_string = 'wget --user=eq --password=event55s "%s" -O %s_%s.mseed'\
-#%(eqstring, name, stamp)
-
-#            os.system(fin_string)
-    
-    #merge files into one one day file, then delete the hourlies.
-    #by putting the function here, it's deleting the hourlies as soon as each
-    #day file is CREATED!
-        
-
-#        merge_delete(Y, M, D, name, date_station)
-       
-#        try:
-#            split_channels(Y, julian, network_name, name, date_station)
-#        
-#        except(TypeError):
-#            continue
-        
-    #delete all multiplexed data, and all files that have 0 data
-    #the remaining data with 0 byte size will have returned typeerror above
-#        for s in glob.glob("*.mseed"):
-#            os.remove(s)     
-        
-#    if julian < 365:
-#        julian += 1; #go to the next day's data, unless it's the end of the year!
-#    else:
-#        julian = 1; Y = str(int(Y) + 1);
-    
-    #call the MSNOISE script for each day that passes in order to correctly process cross-correlations
-    #os.system('/home/boland/Documents/MSNoise-master/msnoise/scripts/cron.sh') 
-
-
-
 
 #=============================================================================
                             ###START ATTACH METADATA###
