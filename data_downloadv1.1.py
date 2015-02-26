@@ -388,7 +388,8 @@ hour = start_date_list[3]
 mins = start_date_list[4]
 
 #example: 3600 seconds for an hour, or 60 seconds for a minute etc. 
-time_dur = 0
+#DO NOT INPUT minute, hour or day as a string for this input!
+time_dur = 3600
 
 #default output file structure is singles. This means all files will just be
 #save to the current working directory. 
@@ -534,29 +535,42 @@ if stations != 0:
     
 else: 
     while check == False:
-   
         stations = raw_input("\nPlease enter the station name you require: ")
+        
         if stations not in stations_list:
             stations_list.append(stations)
+            print("\nYour current station/s to be outputed is/are: ")
             print(stations_list)
         else:
+            print("\nPlease choose a station different from those already enter")
             continue
         
+        check = False
         check2 = False
         while check2 == False:
+            
             YN = raw_input("\nDo you also require data from another station? (Y/N) ")
             
-            if YN in 'Y' or 'N':
-                if YN in 'Y':
-                    check = False
-                    check2 = True
-                else:
-                    check = True
-                    check2 = True
-
-            else:
+            #if YN == 'Y' or 'N':
+                
+            if YN == 'Y': # or 'yes' or 'YES' or 'Yes' or 'y':
                 check = False
-                print("Please enter either Y or N as your answer")
+                check2 = True
+                    
+            elif YN == 'N': # or 'no' or 'NO' or 'No' or 'n': 
+                print(YN)
+                check = True
+                check2 = True
+                    
+            else:
+                print("\nPlease enter either Y or N as your answer")
+                check = False
+                check2 = False
+
+            #else:
+                #check = False
+                #check2 = False
+                #print("Please enter either Y or N as your answer")
 
 
 
@@ -571,7 +585,7 @@ elif stations is list or stations in all_stations:
             
 else:
     check = False
-    print("\nYou have yet to enter a station name of correct format")
+    print("\nYou have not entered a station in the network of this server")
     print("\nYour STATION options are: ")
     stations_str = ''
     for i in all_stations: stations_str += i + " " 
@@ -583,32 +597,33 @@ else:
           ###CALL FOR DOWNLOAD CONCATENATION AND CHECK STRUCTURE###
 #=============================================================================
 
-
-if time_dur == 86400 or 'day' in time_dur_string:
+for station_name in stations_list:
     
-    #reset time_dur to one hour or 3600 seconds in order to not time out!
-    time_dur = 3600
+    if time_dur == 86400:
     
-    for i in range(0,24):
+        #reset time_dur to one hour or 3600 seconds in order to not time out!
+        time_dur = 3600
+    
+        for i in range(0,24):
         
-        print(hour)
+            print(hour)
+            download(year, month, day, hour, mins, time_dur, station_name)
+            #change type to int, add hour to the int, the change back to string in 
+            #order for the download function to work!
+            hour = int(hour); hour += 1; hour = str(hour)
+        
+            ###EDIT MERGE_DELETE FUNCTION TO WORK!!!###
+        start_time = starttime(year, month, day, hour, mins)
+        merge_delete(year, month, day, hour, mins, time_dur, station_name)
+    
+    elif int(float(time_dur) / 3600) > 1:
+    
         download(year, month, day, hour, mins, time_dur, station_name)
-        #change type to int, add hour to the int, the change back to string in 
-        #order for the download function to work!
-        hour = int(hour); hour += 1; hour = str(hour)
-        
-        ###EDIT MERGE_DELETE FUNCTION TO WORK!!!###
-    start_time = starttime(year, month, day, hour, mins)
-    merge_delete(year, month, day, hour, mins, time_dur, station_name)
-    
-elif int(float(time_dur) / 3600) > 1:
-    
-    download(year, month, day, hour, mins, time_dur, station_name)
 
     
-else:
+    else:
     
-    download(year, month, day, hour, mins, time_dur, station_name)
+        download(year, month, day, hour, mins, time_dur, station_name)
 
     
         
